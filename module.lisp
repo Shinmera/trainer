@@ -34,16 +34,15 @@
                        (format-time-since (- (stop-time program) (start-time program))))))))))
 
 (define-command train (dictionary &optional (attempts 1) (repeat-failed 0)) (:documentation "Start training a dictionary on this channel.")
-  (with-id (id)
-    (if (gethash id (trainings module))
-        (respond event "Already training on this channel!")
-        (progn
-          (unless (integerp attempts) (setf attempts (parse-integer attempts)))
-          (unless (integerp repeat-failed) (setf repeat-failed (parse-integer repeat-failed)))
-          (let ((instance (make-instance 'program :attempts attempts :repeat-failed repeat-failed :dictionary dictionary)))
-            (setf (gethash id (trainings module)) instance)
-            (respond event "Ready, set, GO!")
-            (respond event "> ~{~a~^, ~}?" (terms (start instance))))))))
+  (flet ((parse (a) (cond ((integerp a) a) ((string-equal a "T") T) (T (parse-integer a)))))
+    (with-id (id)
+      (if (gethash id (trainings module))
+          (respond event "Already training on this channel!")
+          (progn
+            (let ((instance (make-instance 'program :attempts (parse attempts) :repeat-failed (parse repeat-failed) :dictionary dictionary)))
+              (setf (gethash id (trainings module)) instance)
+              (respond event "Ready, set, GO!")
+              (respond event "> ~{~a~^, ~}?" (terms (start instance)))))))))
 
 (define-command (trainer stop) () (:documentation "Stop training on this channel.")
   (with-id (id)
