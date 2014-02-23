@@ -6,6 +6,15 @@
 
 (in-package #:org.tymoonnext.colleen.mod.trainer)
 
+(defmacro with-id ((idvar &key (eventvar 'event)) &body body)
+  `(let ((,idvar (format NIL "~a/~a" (server ,eventvar) (channel ,eventvar))))
+     ,@body))
+
+(defun format-time-since (secs)
+  (multiple-value-bind (s m h dd yy) (decode-universal-time secs)
+    (setf yy (- yy 1) dd (- dd 1) h (- h 1))
+    (format NIL "~:[~D years, ~;~*~]~:[~D days, ~;~*~]~:[~D hours, ~;~*~]~:[~D minutes, ~;~*~]~:[~D seconds~;~*~]" (= yy 0) yy (= dd 0) dd (= h 0) h (= m 0) m (= s 0) s)))
+
 (define-module trainer ()
     ((%trainings :initform (make-hash-table :test 'equalp) :accessor trainings))
   (:documentation "Train vocabulary."))
@@ -13,13 +22,35 @@
 (define-group trainer :documentation "Manage the trainer.")
 
 (define-handler (privmsg-event event) ()
-  )
+  (with-id (id)
+    (when-let ((program (gethash id (trainings module))))
+      (multiple-value-bind (next correct) (submit program (message event))
+        (if next
+            (respond event "~:[Wrong.~;Correct!~] ~{~a~^, ~}?" correct (terms next))
+            (progn
+              (remhash id (trainings module))
+              (respond event "All done! ~a correct, ~a wrong. Time taken: ~a"
+                       (success-count program) (fail-count program)
+                       (format-time-since (- (stop-time program) (start-time program))))))))))
 
-(define-handler (quit-event event) ()
-  )
+(define-command train (dictionary &optional (attempts 1) (repeat-failed 0)) (:documentation "Start training a dictionary on this channel.")
+  (with-id (id)
+    (if (gethash id (trainings module))
+        (respond event "Already training on this channel!")
+        (progn
+          (unless (integerp attempts) (setf attempts (parse-integer attempts)))
+          (unless (integerp repeat-failed) (setf repeat-failed (parse-integer repeat-failed)))
+          (let ((instance (make-instance 'program :attempts attempts :repeat-failed repeat-failed :dictionary dictionary)))
+            (setf (gethash id (trainings module)) instance)
+            (respond event "Ready, set, GO!")
+            (respond event "> ~{~a~^, ~}?" (terms (start instance))))))))
 
-(define-command train (dictionary) (:documentation "Start training a dictionary on this channel.")
-  )
+(define-command (trainer stop) () (:documentation "Stop training on this channel.")
+  (with-id (id)
+    (if (gethash id (trainings module))
+        (progn (remhash id (trainings module))
+               (respond event "Training stopped."))
+        (respond event "Training isn't active on this channel."))))
 
 (define-command (trainer dictionaries) () (:documentation "List all available dictionaries.")
   (respond event "Defined dictionaries: ~{~a~^, ~}" (hash-table-keys *dictionaries*)))
