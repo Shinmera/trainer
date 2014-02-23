@@ -18,8 +18,9 @@
   :serial T
   :components ((:file "package")
                (:file "dictionary")
+               (:file "program")
+               (:file "module")
                (:module "dicts"
-                :components ((:file "genki-1")))
-               (:file "module"))
+                :components ((:file "genki-1"))))
   :depends-on (:colleen
                :alexandria))
