@@ -23,4 +23,5 @@
                (:module "dicts"
                 :components ((:file "genki-1"))))
   :depends-on (:colleen
-               :alexandria))
+               :alexandria
+               :cl-ppcre))

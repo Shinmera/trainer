@@ -39,7 +39,10 @@
 (defgeneric start (program))
 (defgeneric stop (program))
 
+(defvar *ignore-regex* (cl-ppcre:create-scanner "[.?!,]"))
+
 (defmethod submit ((program program) guess)
+  (setf guess (string-trim " " (cl-ppcre:regex-replace-all *ignore-regex* guess "")))
   (if (translation-p (first (current-set program)) guess)
       (progn
         (values (succeed program) T T))
