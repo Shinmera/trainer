@@ -66,7 +66,7 @@ TRANSLATION --- a string"
 (defmethod (setf term-translations) (translations dictionary term)
   (setf (translations (find-word dictionary term)) translations))
 
-(defmethod translation-p ((dictionary list) translation)
+(defmethod translation-p ((dictionary string) translation)
   "Returns T if the given translations is one of the possible translations for the term. See FIND-WORD."
   (member translation (dictionary dictionary) :key #'translations :test #'(lambda (translation list) (member translation list :test #'string-equal))))
 
@@ -88,11 +88,11 @@ TRANSLATION --- a string"
   "Create a copy of the list of translations. See TERM-TRANSLATIONS."
   (copy-list (term-translations dictionary term)))
 
-(defmethod terms ((dictionary list))
+(defmethod terms ((dictionary string))
   "Returns the list of term-lists of a dictionary."
   (mapcar #'terms (dictionary dictionary)))
 
-(defmethod translations ((dictionary list))
+(defmethod translations ((dictionary string))
   "Returns the list of translation-lists of a dictionary."
   (mapcar #'translations (dictionary dictionary)))
 
