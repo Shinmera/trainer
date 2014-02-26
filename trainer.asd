@@ -21,7 +21,7 @@
                (:file "program")
                (:file "module")
                (:module "dicts"
-                :components ((:file "genki-1"))))
+                :components ((:file "genki"))))
   :depends-on (:colleen
                :alexandria
                :cl-ppcre))
