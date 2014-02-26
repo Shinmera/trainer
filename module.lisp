@@ -51,17 +51,27 @@
                (respond event "Training stopped."))
         (respond event "Training isn't active on this channel."))))
 
+(defun pageinate (list &key (limit 25))
+  (with-output-to-string (stream)
+    (loop for item on list
+          for i = 1 then (1+ i) 
+          do (format stream "~a" (car item))
+          unless (eq (cdr item) NIL)
+            do (format stream ", ")
+          if (= (mod i limit) 0)
+            do (format stream "~%"))))
+
 (define-command (trainer dictionaries) () (:documentation "List all available dictionaries.")
   (respond event "Defined dictionaries: ~{~a~^, ~}" (hash-table-keys *dictionaries*)))
 
 (define-command (trainer translations) (dictionary term) (:documentation "List all defined translations for a term.")
-  (respond event "Translations for ~a: ~{~a~^, ~}" term (term-translations dictionary term)))
+  (respond event "Translations for ~a: ~a" term (pageinate (term-translations dictionary term))))
 
 (define-command (trainer siblings) (dictionary term) (:documentation "List all sibling terms for a term.")
-  (respond event "Siblings for ~a: ~{~a~^, ~}" term (term-siblings dictionary term)))
+  (respond event "Siblings for ~a: ~a" term (pageinate (term-siblings dictionary term))))
 
-(define-command (trainer words) (dictionary) (:documentation "List all words in the dictionary.")
-  (respond event "All words in ~a: ~{~a~^, ~}" dictionary (mapcar #'car (terms dictionary))))
+(define-command (trainer terms) (dictionary) (:documentation "List all words in the dictionary.")
+  (respond event "All words in ~a: ~a" dictionary (pageinate (mapcar #'car (terms dictionary)))))
 
 (define-command (trainer add-dictionary) (name) (:authorization T :documentation "Define a new dictionary.")
   (if (dictionary name)
