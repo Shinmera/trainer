@@ -61,6 +61,12 @@
           if (= (mod i limit) 0)
             do (format stream "~%"))))
 
+(define-command (trainer count-all) () (:documentation "Count all terms in all dictionaries.")
+  (respond event "Number of known terms in ~d dictionaries: ~d"
+           (hash-table-count *dictionaries*)
+           (loop for dict being the hash-values of *dictionaries*
+                 summing (length dict))))
+
 (define-command (trainer dictionaries) () (:documentation "List all available dictionaries.")
   (respond event "Defined dictionaries: ~{~a~^, ~}" (hash-table-keys *dictionaries*)))
 
