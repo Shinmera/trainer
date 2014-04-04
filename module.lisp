@@ -13,7 +13,7 @@
 (defun format-time-since (secs)
   (multiple-value-bind (s m h dd yy) (decode-universal-time secs)
     (setf yy (- yy 1) dd (- dd 1) h (- h 1))
-    (format NIL "~:[~D years, ~;~*~]~:[~D days, ~;~*~]~:[~D hours, ~;~*~]~:[~D minutes, ~;~*~]~:[~D seconds~;~*~]" (= yy 0) yy (= dd 0) dd (= h 0) h (= m 0) m (= s 0) s)))
+    (format NIL "~:[~D years~;~*~]~:[ ~D days~;~*~]~:[ ~D hours~;~*~]~:[ ~D minutes~;~*~]~:[ ~D seconds~;~*~]" (= yy 0) yy (= dd 0) dd (= h 0) h (= m 0) m (= s 0) s)))
 
 (define-module trainer ()
     ((%trainings :initform (make-hash-table :test 'equalp) :accessor trainings))
@@ -24,9 +24,10 @@
 (define-handler (privmsg-event event) ()
   (with-id (id)
     (when-let ((program (gethash id (trainings module))))
-      (multiple-value-bind (next correct) (submit program (message event))
+      (multiple-value-bind (next correct retry translations) (submit program (message event))
+        (declare (ignore retry))
         (if next
-            (respond event "~:[Wrong.~;Correct!~] ~{~a~^, ~}?" correct (terms next))
+            (respond event "~:[Wrong (~{~a~^, ~})~;Correct!~*~] ~{~a~^, ~}?" correct translationsi (terms next))
             (progn
               (remhash id (trainings module))
               (respond event "All done! ~a correct, ~a wrong. Time taken: ~a"

@@ -43,15 +43,16 @@
 
 (defmethod submit ((program program) guess)
   (setf guess (string-trim " " (cl-ppcre:regex-replace-all *ignore-regex* guess "")))
-  (if (translation-p (first (current-set program)) guess)
-      (progn
-        (values (succeed program) T T))
-      (progn
-        (incf (current-attempts program))
-        (if (or (eq (attempts program) T)
-                (< (current-attempts program) (attempts program)))
-            (values (first (current-set program)) NIL NIL)
-            (values (fail program) NIL T)))))
+  (let ((word (first (current-set program))))
+    (if (translation-p word guess)
+        (progn
+          (values (succeed program) T T (translations word)))
+        (progn
+          (incf (current-attempts program))
+          (if (or (eq (attempts program) T)
+                  (< (current-attempts program) (attempts program)))
+              (values (first (current-set program)) NIL NIL (translations word))
+              (values (fail program) NIL T (translations word)))))))
 
 (defmethod fail ((program program))
   (push (first (current-set program)) (failed-set program))
